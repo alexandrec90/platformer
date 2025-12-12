@@ -1,0 +1,110 @@
+import { game } from './state.js';
+import { spawnScoreExplosion } from './utils.js';
+
+export function parseLevel(levelRaw) {
+    const tileSize = levelRaw.tileSize || 32;
+    
+    // STITCHING LOGIC: Combine chunks into one big map
+    let fullMap = [];
+    if (levelRaw.chunks) {
+        // Initialize empty rows based on height of first chunk
+        const height = levelRaw.chunks[0].length;
+        for (let i = 0; i < height; i++) fullMap[i] = "";
+
+        // Append each chunk's rows to the fullMap
+        levelRaw.chunks.forEach(chunk => {
+            chunk.forEach((row, rowIndex) => {
+                fullMap[rowIndex] += row;
+            });
+        });
+    } else {
+        fullMap = levelRaw.map; // Fallback for non-chunked levels
+    }
+
+    const level = {
+        width: fullMap[0].length * tileSize,
+        height: fullMap.length * tileSize,
+        platforms: [],
+        enemies: [],
+        collectibles: [],
+        decorations: [],
+        startPos: { x: 50, y: 50 },
+        templates: levelRaw.templates || [], // Store templates for infinite generation
+        legend: levelRaw.legend // Store legend for parsing templates
+    };
+
+    fullMap.forEach((row, rowIndex) => {
+        for (let colIndex = 0; colIndex < row.length; colIndex++) {
+            const char = row[colIndex];
+            const type = levelRaw.legend[char];
+            const x = colIndex * tileSize;
+            const y = rowIndex * tileSize;
+
+            if (!type || type === 'empty') continue;
+
+            if (type === 'start') {
+                level.startPos = { x: x + (tileSize - 20) / 2, y };
+                game.player.x = level.startPos.x;
+                game.player.y = level.startPos.y;
+            } else if (type === 'grass' || type === 'stone' || type === 'dirt') {
+                level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
+            } else if (type === 'slime') {
+                level.enemies.push({ x, y, type, width: 32, height: 32, vx: 1 });
+            } else if (type === 'coin') {
+                level.collectibles.push({ x, y, type });
+            } else if (type === 'tree' || type === 'cloud') {
+                const scale = type === 'tree' ? 1.5 + Math.random() : 2 + Math.random() * 2;
+                level.decorations.push({ x, y, type, scale });
+            }
+        }
+    });
+    
+    return level;
+}
+
+export function extendLevel() {
+    if (!game.level.templates || game.level.templates.length === 0) return;
+
+    // Pick a random template from the loaded level data
+    const randomChunk = game.level.templates[Math.floor(Math.random() * game.level.templates.length)];
+    
+    // Parse and append to current level
+    const tileSize = 32;
+    const startX = game.level.width; // Start appending from current end
+    
+    randomChunk.forEach((row, rowIndex) => {
+        for (let colIndex = 0; colIndex < row.length; colIndex++) {
+            const char = row[colIndex];
+            const type = game.level.legend[char];
+
+            if (!type || type === 'empty' || type === 'start') continue;
+
+            const x = startX + (colIndex * tileSize);
+            const y = rowIndex * tileSize;
+
+            if (type === 'grass' || type === 'stone' || type === 'dirt') {
+                game.level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
+            } else if (type === 'slime') {
+                game.level.enemies.push({ x, y, type, width: 32, height: 32, vx: 1 });
+            } else if (type === 'coin') {
+                game.level.collectibles.push({ x, y, type });
+            } else if (type === 'tree' || type === 'cloud') {
+                const scale = type === 'tree' ? 1.5 + Math.random() : 2 + Math.random() * 2;
+                game.level.decorations.push({ x, y, type, scale });
+            }
+        }
+    });
+
+    // Update level width
+    game.level.width += (16 * tileSize);
+}
+
+export function resetLevel() {
+    if (!game.level) return;
+    if (game.score > 0) spawnScoreExplosion();
+    game.player.x = game.level.startPos.x;
+    game.player.y = game.level.startPos.y;
+    game.player.vx = 0;
+    game.player.vy = 0;
+    game.score = 0;
+}
