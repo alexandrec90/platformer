@@ -50,12 +50,14 @@ export function parseLevel(levelRaw) {
             } else if (type === 'grass' || type === 'stone' || type === 'dirt') {
                 level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
             } else if (type === 'slime') {
-                level.enemies.push({ x, y, type, width: 32, height: 32, vx: 1 });
+                const actualType = Math.random() > 0.5 ? 'slime_alt' : 'slime';
+                level.enemies.push({ x, y, type: actualType, width: 32, height: 32, vx: 1 });
             } else if (type === 'coin') {
                 level.collectibles.push({ x, y, type });
             } else if (type === 'tree' || type === 'cloud') {
                 const scale = type === 'tree' ? 1.5 + Math.random() : 2 + Math.random() * 2;
-                level.decorations.push({ x, y, type, scale });
+                const actualType = Math.random() > 0.5 ? type + '_alt' : type;
+                level.decorations.push({ x, y, type: actualType, scale });
             }
         }
     });
@@ -91,12 +93,14 @@ export function extendLevel() {
             if (type === 'grass' || type === 'stone' || type === 'dirt') {
                 game.level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
             } else if (type === 'slime') {
-                game.level.enemies.push({ x, y, type, width: 32, height: 32, vx: 1 });
+                const actualType = Math.random() > 0.5 ? 'slime_alt' : 'slime';
+                game.level.enemies.push({ x, y, type: actualType, width: 32, height: 32, vx: 1 });
             } else if (type === 'coin') {
                 game.level.collectibles.push({ x, y, type });
             } else if (type === 'tree' || type === 'cloud') {
                 const scale = type === 'tree' ? 1.5 + Math.random() : 2 + Math.random() * 2;
-                game.level.decorations.push({ x, y, type, scale });
+                const actualType = Math.random() > 0.5 ? type + '_alt' : type;
+                game.level.decorations.push({ x, y, type: actualType, scale });
             }
         }
     });

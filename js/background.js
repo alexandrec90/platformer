@@ -1,8 +1,8 @@
 import { game, canvas } from './state.js';
 
 const LAYERS = [
-    { speed: 0.2, color: '#E8F5E9', yOffset: 150, amplitude: 60, frequency: 0.002, trees: false },
-    { speed: 0.5, color: '#C5E1A5', yOffset: 100, amplitude: 40, frequency: 0.004, trees: true, treeOpacity: 0.6 },
+    { speed: 0.2, color: '#E8F5E9', yOffset: 150, amplitude: 60, frequency: 0.002, trees: true, treeOpacity: 0.6 },
+    { speed: 0.5, color: '#C5E1A5', yOffset: 100, amplitude: 40, frequency: 0.004, trees: true, treeOpacity: 0.8 },
     { speed: 0.8, color: '#81C784', yOffset: 50, amplitude: 30, frequency: 0.008, trees: true, treeOpacity: 1.0 }
 ];
 
@@ -17,7 +17,8 @@ export function initBackground() {
             x: Math.random() * (game.level.width + canvas.width),
             y: Math.random() * (canvas.height / 2),
             speed: 0.1 + Math.random() * 0.3,
-            scale: 0.5 + Math.random() * 0.8
+            scale: 0.5 + Math.random() * 0.8,
+            type: Math.random() > 0.5 ? 'cloud_alt' : 'cloud'
         });
     }
 
@@ -34,7 +35,7 @@ export function initBackground() {
             const maxDist = game.level.width + canvas.width; 
             
             for (let x = -canvas.width; x < maxDist; x += density + Math.random() * 50) {
-                trees.push({ x: x });
+                trees.push({ x: x, type: Math.random() > 0.5 ? 'tree_alt' : 'tree' });
             }
         }
         return { ...layer, trees };
@@ -48,7 +49,7 @@ export function extendBackground(startX, width) {
             // Generate trees for the new chunk
             // We add a buffer to ensure coverage
             for (let x = startX; x < startX + width + 200; x += density + Math.random() * 50) {
-                layer.trees.push({ x: x });
+                layer.trees.push({ x: x, type: Math.random() > 0.5 ? 'tree_alt' : 'tree' });
             }
         }
     });
@@ -106,7 +107,7 @@ export function drawBackground(ctx) {
         // Simple parallax for clouds (very slow movement relative to camera)
         const parallaxX = cloud.x - game.camera.x * 0.1;
         
-        const img = getSprite('cloud');
+        const img = getSprite(cloud.type || 'cloud');
         
         if (img) {
             ctx.drawImage(img, parallaxX, cloud.y, 64 * cloud.scale, 32 * cloud.scale);
@@ -130,13 +131,20 @@ export function drawBackground(ctx) {
         ctx.beginPath();
         ctx.moveTo(0, canvas.height);
 
-        // Draw the curve
-        // We iterate across the screen width (plus buffer)
-        const step = 20; // Precision of the curve
-        for (let screenX = 0; screenX <= canvas.width + step; screenX += step) {
-            const worldX = startWorldX + screenX;
-            const y = getHillY(worldX, layer);
+        // Draw pixelated hills
+        const pixelSize = 4;
+        const startPixelIndex = Math.floor(startWorldX / pixelSize);
+        const endPixelIndex = Math.ceil((startWorldX + canvas.width) / pixelSize);
+
+        for (let i = startPixelIndex; i <= endPixelIndex; i++) {
+            const worldX = i * pixelSize;
+            const screenX = worldX - startWorldX;
+            
+            let y = getHillY(worldX, layer);
+            y = Math.floor(y / pixelSize) * pixelSize;
+
             ctx.lineTo(screenX, y);
+            ctx.lineTo(screenX + pixelSize, y);
         }
 
         ctx.lineTo(canvas.width, canvas.height);
@@ -145,7 +153,8 @@ export function drawBackground(ctx) {
 
         // Draw Trees for this layer
         if (layer.trees) {
-            if (layer.treeOpacity) ctx.globalAlpha = layer.treeOpacity;
+            // Ensure opacity is applied, default to 1.0 if undefined
+            ctx.globalAlpha = (layer.treeOpacity !== undefined) ? layer.treeOpacity : 1.0;
             
             layer.trees.forEach(tree => {
                 // Calculate screen position: ScreenX = TreeWorldX - CameraX * LayerSpeed
@@ -153,9 +162,10 @@ export function drawBackground(ctx) {
                 
                 // Only draw if visible
                 if (screenX > -100 && screenX < canvas.width + 100) {
-                    const y = getHillY(tree.x, layer);
+                    let y = getHillY(tree.x, layer);
+                    y = Math.floor(y / 4) * 4; // Snap to pixel grid
                     
-                    const img = getSprite('tree');
+                    const img = getSprite(tree.type || 'tree');
                     
                     if (img) {
                         // Scale tree based on layer (further away = smaller)

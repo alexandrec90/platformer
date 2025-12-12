@@ -10,15 +10,19 @@ export async function initAssets() {
         game.level = parseLevel(levelData.levels[0]); // Parse ASCII level
 
         // Load Sprites
-        const spriteIds = ['stone', 'dirt', 'coin'];
+        const spriteIds = ['stone', 'dirt'];
         const animatedSprites = {
             'grass': 3,
             'tree': 3,
+            'tree_alt': 3,
             'cloud': 3,
+            'cloud_alt': 3,
             'slime': 2,
+            'slime_alt': 2,
             'player_idle': 2,
             'player_walk': 2,
-            'player_jump': 1
+            'player_jump': 1,
+            'coin': 3
         };
 
         const loadSprite = (id, path) => {

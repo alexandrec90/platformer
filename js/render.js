@@ -60,7 +60,7 @@ export function draw() {
                 let drawX = deco.x + 16 - size / 2; // Center horizontally
                 let drawY = deco.y + 16 - size / 2; // Center vertically (default for clouds)
 
-                if (deco.type === 'tree') {
+                if (deco.type === 'tree' || deco.type === 'tree_alt') {
                     // Ground trees: Bottom of tree aligns with bottom of tile
                     drawY = (deco.y + 32) - size;
                 }
@@ -119,9 +119,14 @@ export function draw() {
     game.particles.forEach(p => {
         if (p.isUi) return;
         if (p.type === 'text') {
-            ctx.font = 'bold 16px Arial';
-            ctx.fillStyle = `rgba(255, 255, 0, ${p.life})`;
+            ctx.save();
+            ctx.font = 'bold 20px "Courier New", monospace';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${p.life})`;
+            ctx.strokeText(p.text, p.x, p.y);
+            ctx.fillStyle = `rgba(255, 215, 0, ${p.life})`; // Gold color
             ctx.fillText(p.text, p.x, p.y);
+            ctx.restore();
         } else if (p.type === 'dust') {
             ctx.fillStyle = `rgba(200, 200, 200, ${p.life})`;
             ctx.fillRect(p.x, p.y, 4, 4);
@@ -139,7 +144,17 @@ export function draw() {
     });
 
     // Draw UI (Score) - Drawn AFTER restore() so it's not affected by camera
-    ctx.fillStyle = 'red';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${game.score}`, 20, 30);
+    ctx.save();
+    ctx.font = 'bold 24px "Courier New", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    
+    // Shadow/Outline for Score
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'black';
+    ctx.strokeText(`Score: ${game.score}`, 20, 20);
+    
+    ctx.fillStyle = '#FFD700'; // Gold
+    ctx.fillText(`Score: ${game.score}`, 20, 20);
+    ctx.restore();
 }
