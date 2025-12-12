@@ -12,10 +12,22 @@ export const PHYSICS = {
  * Apply horizontal movement and collision detection
  */
 export function updateHorizontalMovement(dx) {
-    game.player.x += dx;
+    // Apply momentum (wall jump velocity)
+    game.player.x += dx + game.player.vx;
+
+    // Friction for vx
+    game.player.vx *= 0.9;
+    if (Math.abs(game.player.vx) < 0.1) game.player.vx = 0;
+
+    // Reset wall contact
+    game.player.touchingWall = null;
 
     // Screen boundary (Left)
-    if (game.player.x < 0) game.player.x = 0;
+    if (game.player.x < 0) {
+        game.player.x = 0;
+        game.player.vx = 0;
+        game.player.touchingWall = 'left';
+    }
 
     // Horizontal Collision
     for (let platform of game.level.platforms) {
@@ -25,11 +37,16 @@ export function updateHorizontalMovement(dx) {
             game.player.y < platform.y + platform.height &&
             game.player.y + game.player.height > platform.y
         ) {
-            if (dx > 0) { // Moving right
+            const totalDx = dx + game.player.vx;
+            if (totalDx > 0) { // Moving right
                 game.player.x = platform.x - game.player.width;
-            } else if (dx < 0) { // Moving left
+                game.player.touchingWall = 'right';
+            } else if (totalDx < 0) { // Moving left
                 game.player.x = platform.x + platform.width;
+                game.player.touchingWall = 'left';
             }
+            // Stop horizontal momentum on collision
+            game.player.vx = 0;
         }
     }
 }
@@ -89,21 +106,13 @@ export function updateCollisions() {
                 game.player.y = platform.y + platform.height;
                 game.player.vy = 0;
             }
-
-            // Wall Slide Detection
-            if (!game.player.grounded && game.player.vy >= 0) {
-                const playerCenterX = game.player.x + game.player.width / 2;
-                const platformCenterX = platform.x + platform.width / 2;
-
-                if (playerCenterX < platformCenterX) {
-                    game.player.wallSliding = true;
-                    game.player.wallSide = 'right';
-                } else {
-                    game.player.wallSliding = true;
-                    game.player.wallSide = 'left';
-                }
-            }
         }
+    }
+
+    // Wall Slide Detection
+    if (!game.player.grounded && game.player.vy >= 0 && game.player.touchingWall) {
+        game.player.wallSliding = true;
+        game.player.wallSide = game.player.touchingWall;
     }
 
     // Spawn particles when wall slide starts

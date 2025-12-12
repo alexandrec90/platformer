@@ -29,8 +29,9 @@ export function parseLevel(levelRaw) {
         collectibles: [],
         decorations: [],
         startPos: { x: 50, y: 50 },
-        templates: levelRaw.templates || [], // Store templates for infinite generation
-        legend: levelRaw.legend // Store legend for parsing templates
+        templates: levelRaw.templates || {}, // Store templates for infinite generation
+        legend: levelRaw.legend, // Store legend for parsing templates
+        chunkCount: 0
     };
 
     fullMap.forEach((row, rowIndex) => {
@@ -47,7 +48,19 @@ export function parseLevel(levelRaw) {
                 game.player.x = level.startPos.x;
                 game.player.y = level.startPos.y;
             } else if (type === 'grass' || type === 'stone' || type === 'dirt') {
-                level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
+                let finalType = type;
+                if (type === 'dirt') {
+                    let isSurface = true;
+                    if (rowIndex > 0) {
+                        const charAbove = fullMap[rowIndex - 1][colIndex];
+                        const typeAbove = levelRaw.legend[charAbove];
+                        if (typeAbove === 'grass' || typeAbove === 'stone' || typeAbove === 'dirt') {
+                            isSurface = false;
+                        }
+                    }
+                    if (isSurface) finalType = 'grass';
+                }
+                level.platforms.push({ x, y, width: tileSize, height: tileSize, type: finalType });
             } else if (type === 'slime') {
                 const actualType = Math.random() > 0.5 ? 'slime_alt' : 'slime';
                 level.enemies.push({ x, y, type: actualType, width: 32, height: 32, vx: 1 });
@@ -70,10 +83,29 @@ export function parseLevel(levelRaw) {
 }
 
 export function extendLevel() {
-    if (!game.level.templates || game.level.templates.length === 0) return;
+    if (!game.level.templates) return;
+
+    // Determine difficulty tier based on chunk count
+    game.level.chunkCount = (game.level.chunkCount || 0) + 1;
+    let tier = 'easy';
+    if (game.level.chunkCount > 5) tier = 'medium';
+    if (game.level.chunkCount > 15) tier = 'hard';
+
+    // Get templates for the tier
+    let templates = [];
+    if (Array.isArray(game.level.templates)) {
+        templates = game.level.templates;
+    } else if (game.level.templates[tier]) {
+        templates = game.level.templates[tier];
+    } else {
+        // Fallback if tier doesn't exist
+        templates = game.level.templates['easy'] || [];
+    }
+
+    if (templates.length === 0) return;
 
     // Pick a random template from the loaded level data
-    const randomChunk = game.level.templates[Math.floor(Math.random() * game.level.templates.length)];
+    const randomChunk = templates[Math.floor(Math.random() * templates.length)];
     
     // Parse and append to current level
     const tileSize = 32;
@@ -90,7 +122,19 @@ export function extendLevel() {
             const y = rowIndex * tileSize;
 
             if (type === 'grass' || type === 'stone' || type === 'dirt') {
-                game.level.platforms.push({ x, y, width: tileSize, height: tileSize, type });
+                let finalType = type;
+                if (type === 'dirt') {
+                    let isSurface = true;
+                    if (rowIndex > 0) {
+                        const charAbove = randomChunk[rowIndex - 1][colIndex];
+                        const typeAbove = game.level.legend[charAbove];
+                        if (typeAbove === 'grass' || typeAbove === 'stone' || typeAbove === 'dirt') {
+                            isSurface = false;
+                        }
+                    }
+                    if (isSurface) finalType = 'grass';
+                }
+                game.level.platforms.push({ x, y, width: tileSize, height: tileSize, type: finalType });
             } else if (type === 'slime') {
                 const actualType = Math.random() > 0.5 ? 'slime_alt' : 'slime';
                 game.level.enemies.push({ x, y, type: actualType, width: 32, height: 32, vx: 1 });
