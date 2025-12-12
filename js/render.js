@@ -1,4 +1,5 @@
 import { game, ctx, canvas } from './state.js';
+import { drawBackground } from './background.js';
 
 export function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -8,6 +9,9 @@ export function draw() {
         ctx.fillText('Loading...', 10, 20);
         return;
     }
+
+    // Draw Background (Parallax)
+    drawBackground(ctx);
 
     ctx.save();
     ctx.translate(-game.camera.x, 0);

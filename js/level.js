@@ -1,5 +1,6 @@
 import { game } from './state.js';
 import { spawnScoreExplosion } from './utils.js';
+import { initBackground, extendBackground } from './background.js';
 
 export function parseLevel(levelRaw) {
     const tileSize = levelRaw.tileSize || 32;
@@ -59,6 +60,11 @@ export function parseLevel(levelRaw) {
         }
     });
     
+    // Store level in game state immediately so initBackground can access dimensions
+    game.level = level;
+    
+    initBackground();
+
     return level;
 }
 
@@ -96,7 +102,10 @@ export function extendLevel() {
     });
 
     // Update level width
-    game.level.width += (16 * tileSize);
+    const addedWidth = 16 * tileSize;
+    game.level.width += addedWidth;
+    
+    extendBackground(startX, addedWidth);
 }
 
 export function resetLevel() {

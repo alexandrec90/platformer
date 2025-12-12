@@ -1,14 +1,17 @@
 import { game, canvas } from './state.js';
 import { playSound, spawnScoreText, spawnLandParticles } from './utils.js';
 import { extendLevel, resetLevel } from './level.js';
+import { updateBackground } from './background.js';
 
 export function update() {
     if (!game.level) return;
 
+    updateBackground();
+
     // Horizontal Movement
     let dx = 0;
-    if (game.keys['ArrowRight']) dx += game.player.speed;
-    if (game.keys['ArrowLeft']) dx -= game.player.speed;
+    if (game.keys['ArrowRight'] || game.keys['KeyD']) dx += game.player.speed;
+    if (game.keys['ArrowLeft'] || game.keys['KeyA']) dx -= game.player.speed;
     game.player.x += dx;
 
     // Screen boundary (Left)
@@ -31,7 +34,7 @@ export function update() {
     }
     
     // Jumping
-    if (game.keys['Space'] && game.player.grounded) {
+    if ((game.keys['Space'] || game.keys['KeyW'] || game.keys['ArrowUp']) && game.player.grounded) {
         game.player.vy = -game.player.jumpStrength;
         game.player.grounded = false;
         playSound('jump');
