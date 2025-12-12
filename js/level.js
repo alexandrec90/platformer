@@ -1,5 +1,4 @@
 import { game } from './state.js';
-import { spawnScoreExplosion } from './utils.js';
 import { initBackground, extendBackground } from './background.js';
 
 export function parseLevel(levelRaw) {
@@ -114,10 +113,11 @@ export function extendLevel() {
 
 export function resetLevel() {
     if (!game.level) return;
-    if (game.score > 0) spawnScoreExplosion();
     game.player.x = game.level.startPos.x;
     game.player.y = game.level.startPos.y;
     game.player.vx = 0;
     game.player.vy = 0;
+    game.player.isDead = false;
+    game.player.deathTimer = 0;
     game.score = 0;
 }

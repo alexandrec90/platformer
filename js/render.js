@@ -88,31 +88,33 @@ export function draw() {
     });
 
     // Draw Player
-    let playerSprite = 'player_idle';
-    
-    // Determine animation state
-    if (!game.player.grounded) {
-        playerSprite = 'player_jump';
-    } else if (game.keys['ArrowRight'] || game.keys['ArrowLeft']) {
-        playerSprite = 'player_walk';
-    }
-
-    const playerImg = getSprite(playerSprite);
-    if (playerImg) {
-        // Center the 32-width sprite on the 20-width hitbox
-        ctx.save();
-        // Flip if moving left
-        if (game.keys['ArrowLeft'] && !game.keys['ArrowRight']) {
-            ctx.translate(game.player.x + game.player.width / 2, game.player.y);
-            ctx.scale(-1, 1);
-            ctx.drawImage(playerImg, -16, 0, 32, 32);
-        } else {
-            ctx.drawImage(playerImg, game.player.x - 6, game.player.y, 32, 32);
+    if (!game.player.isDead) {
+        let playerSprite = 'player_idle';
+        
+        // Determine animation state
+        if (!game.player.grounded) {
+            playerSprite = 'player_jump';
+        } else if (game.keys['ArrowRight'] || game.keys['ArrowLeft']) {
+            playerSprite = 'player_walk';
         }
-        ctx.restore();
-    } else {
-        ctx.fillStyle = 'red';
-        ctx.fillRect(game.player.x, game.player.y, game.player.width, game.player.height);
+
+        const playerImg = getSprite(playerSprite);
+        if (playerImg) {
+            // Center the 32-width sprite on the 20-width hitbox
+            ctx.save();
+            // Flip if moving left
+            if (game.keys['ArrowLeft'] && !game.keys['ArrowRight']) {
+                ctx.translate(game.player.x + game.player.width / 2, game.player.y);
+                ctx.scale(-1, 1);
+                ctx.drawImage(playerImg, -16, 0, 32, 32);
+            } else {
+                ctx.drawImage(playerImg, game.player.x - 6, game.player.y, 32, 32);
+            }
+            ctx.restore();
+        } else {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(game.player.x, game.player.y, game.player.width, game.player.height);
+        }
     }
 
     // Draw Particles
@@ -130,6 +132,11 @@ export function draw() {
         } else if (p.type === 'dust') {
             ctx.fillStyle = `rgba(200, 200, 200, ${p.life})`;
             ctx.fillRect(p.x, p.y, 4, 4);
+        } else if (p.type === 'player_fragment') {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 6, 6);
+            ctx.globalAlpha = 1.0;
         }
     });
 

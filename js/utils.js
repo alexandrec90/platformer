@@ -38,6 +38,48 @@ export function spawnScoreExplosion() {
     }
 }
 
+export function spawnDeathExplosion(x, y) {
+    for (let i = 0; i < 30; i++) {
+        game.particles.push({
+            type: 'player_fragment',
+            x: x + 10, // Center of player
+            y: y + 16,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1.0,
+            color: Math.random() > 0.5 ? '#e74c3c' : '#c0392b' // Red shades
+        });
+    }
+}
+
+export function spawnEnemyExplosion(x, y) {
+    for (let i = 0; i < 20; i++) {
+        game.particles.push({
+            type: 'player_fragment', // Reuse rendering logic
+            x: x + 16,
+            y: y + 16,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1.0,
+            color: Math.random() > 0.5 ? '#8e44ad' : '#9b59b6' // Purple shades
+        });
+    }
+}
+
+export function spawnCoinExplosion(x, y) {
+    for (let i = 0; i < 10; i++) {
+        game.particles.push({
+            type: 'player_fragment', // Reuse rendering logic
+            x: x + 16,
+            y: y + 16,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            life: 1.0,
+            color: Math.random() > 0.5 ? '#FFD700' : '#FFA500' // Gold/Orange shades
+        });
+    }
+}
+
 export function playSound(name) {
     if (game.sounds[name] && game.hasInteracted) {
         game.sounds[name].currentTime = 0;

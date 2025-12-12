@@ -1,84 +1,37 @@
 import { game, canvas } from './state.js';
-import { playSound, spawnScoreText, spawnLandParticles } from './utils.js';
+import { playSound, spawnScoreText, spawnLandParticles, spawnDeathExplosion, spawnEnemyExplosion, spawnCoinExplosion } from './utils.js';
 import { extendLevel, resetLevel } from './level.js';
 import { updateBackground } from './background.js';
+import { handleJump, handleMovement } from './controls.js';
+import { updateHorizontalMovement, updateGravity, applyVerticalMovement, updateCollisions } from './physics.js';
 
 export function update() {
     if (!game.level) return;
 
     updateBackground();
 
-    // Horizontal Movement
-    let dx = 0;
-    if (game.keys['ArrowRight'] || game.keys['KeyD']) dx += game.player.speed;
-    if (game.keys['ArrowLeft'] || game.keys['KeyA']) dx -= game.player.speed;
-    game.player.x += dx;
-
-    // Screen boundary (Left)
-    if (game.player.x < 0) game.player.x = 0;
-
-    // Horizontal Collision
-    for (let platform of game.level.platforms) {
-        if (
-            game.player.x < platform.x + platform.width &&
-            game.player.x + game.player.width > platform.x &&
-            game.player.y < platform.y + platform.height &&
-            game.player.y + game.player.height > platform.y
-        ) {
-            if (dx > 0) { // Moving right
-                game.player.x = platform.x - game.player.width;
-            } else if (dx < 0) { // Moving left
-                game.player.x = platform.x + platform.width;
-            }
+    // Handle Death
+    if (game.player.isDead) {
+        game.player.deathTimer--;
+        if (game.player.deathTimer <= 0) {
+            resetLevel();
         }
-    }
-    
-    // Jumping
-    if ((game.keys['Space'] || game.keys['KeyW'] || game.keys['ArrowUp']) && game.player.grounded) {
-        game.player.vy = -game.player.jumpStrength;
-        game.player.grounded = false;
-        playSound('jump');
+        // Still update particles
+        updateParticles();
+        return;
     }
 
-    // Gravity
-    game.player.vy += 0.5; 
-    game.player.y += game.player.vy;
-    
-    // Vertical Collision
-    const wasGrounded = game.player.grounded;
-    game.player.grounded = false;
-
-    for (let platform of game.level.platforms) {
-        if (
-            game.player.x < platform.x + platform.width &&
-            game.player.x + game.player.width > platform.x &&
-            game.player.y < platform.y + platform.height &&
-            game.player.y + game.player.height > platform.y
-        ) {
-            if (game.player.vy > 0) { // Falling
-                // Only snap to top if we were previously above it
-                const prevBottom = game.player.y - game.player.vy + game.player.height;
-                // Use a small threshold to forgive floating point errors, but prevent snapping from deep below
-                if (prevBottom <= platform.y + 2) {
-                    game.player.y = platform.y - game.player.height;
-                    game.player.vy = 0;
-                    game.player.grounded = true;
-                    if (!wasGrounded) {
-                        playSound('land');
-                        spawnLandParticles(game.player.x, game.player.y);
-                    }
-                }
-            } else if (game.player.vy < 0) { // Jumping up
-                game.player.y = platform.y + platform.height;
-                game.player.vy = 0;
-            }
-        }
-    }
+    // Player Controls & Physics
+    const dx = handleMovement();
+    handleJump();
+    updateHorizontalMovement(dx);
+    updateGravity();
+    applyVerticalMovement();
+    updateCollisions();
 
     // Check for death (falling off map)
     if (game.player.y > game.level.height + 100) {
-        resetLevel();
-        playSound('death');
+        triggerDeath();
     }
 
     // Update Enemies (Simple AI)
@@ -125,14 +78,14 @@ export function update() {
             // Check if player is falling and hitting the top of the enemy
             if (game.player.vy > 0 && (game.player.y + game.player.height - game.player.vy) <= enemy.y + 10) {
                 // Kill enemy
+                spawnEnemyExplosion(enemy.x, enemy.y);
                 game.level.enemies.splice(i, 1);
                 game.player.vy = -8; // Bounce
                 game.score += 10;
                 spawnScoreText(game.player.x, game.player.y, 10);
                 playSound('squish');
             } else {
-                resetLevel();
-                playSound('death');
+                triggerDeath();
             }
         }
     }
@@ -149,6 +102,7 @@ export function update() {
             game.level.collectibles.splice(i, 1);
             game.score += 10;
             spawnScoreText(coin.x, coin.y, 10);
+            spawnCoinExplosion(coin.x, coin.y);
             playSound('coin');
         }
     }
@@ -164,6 +118,10 @@ export function update() {
         extendLevel();
     }
 
+    updateParticles();
+}
+
+function updateParticles() {
     // Update Particles
     for (let i = game.particles.length - 1; i >= 0; i--) {
         const p = game.particles[i];
@@ -174,4 +132,12 @@ export function update() {
             game.particles.splice(i, 1);
         }
     }
+}
+
+function triggerDeath() {
+    if (game.player.isDead) return;
+    game.player.isDead = true;
+    game.player.deathTimer = 60; // 1 second at 60fps
+    spawnDeathExplosion(game.player.x, game.player.y);
+    playSound('death');
 }

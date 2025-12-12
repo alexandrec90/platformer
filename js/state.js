@@ -14,7 +14,12 @@ export const game = {
         vy: 0,
         speed: 5,
         jumpStrength: 12,
-        grounded: false
+        grounded: false,
+        wallSliding: false,
+        wallSide: null, // 'left' or 'right'
+        wallSlideSpeed: 2, // Slow fall speed when sliding
+        isDead: false,
+        deathTimer: 0
     },
     keys: {},
     camera: { x: 0, y: 0 },
