@@ -13,14 +13,16 @@
 - [x] Keyboard input handling (arrow keys, WASD)
 - [ ] Gamepad support
 - [ ] Mobile touch controls
+- [ ] Varying jump intensity
+- [ ] Crouch (even in mid-air)
 
 ## Graphics & Rendering
 - [x] Sprite sheet parsing and rendering
 - [x] Background parallax scrolling
-- [ ] Camera follow player
-- [ ] Animation system for sprites
-- [ ] add player death animation
-- [ ] Visual effects (particles, transitions)
+- [x] Camera follow player
+- [x] Animation system for sprites
+- [x] add player death animation
+- [x] Visual effects (particles, transitions)
 
 ## Audio
 - [x] Background music implementation
@@ -37,8 +39,9 @@
 
 ## Level Design
 - [ ] Create additional levels
-- [ ] Level editor tool
-- [ ] Difficulty progression
+- [x] Difficulty progression
+- [ ] Vertical offset for chunks
+- [ ] More opportunities for wall-jumping
 
 ## Performance & Polish
 - [ ] Optimize rendering performance
@@ -53,6 +56,5 @@
 - [ ] Gameplay testing across different browsers
 
 ## Documentation
-- [ ] Update README with gameplay instructions
-- [ ] Document API and architecture
+- [x] Update README with gameplay instructions
 - [ ] Add code comments for complex logic
